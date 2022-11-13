@@ -38,7 +38,7 @@ ldi gvar, 0b00011100
 out ddrd,r21
 ldi gvar, 0b00111111
 out ddrc,r21
-ldi gvar, 0b00001111
+ldi gvar, 0b00011111
 out ddrb,r21
 
 eti_init:
@@ -112,7 +112,8 @@ ldi r16,0b00010000
 	out portc,r16
 	rcall mat  
 	rcall res
-	rcall del100
+
+	rcall Recibir
 	rjmp hell
 	win:  //Este es el ciclo en el que se queda atorado el código si se gana
 	//Se prenden los botones de reset e inicio y se cicla esperando un reinicio manual
@@ -120,7 +121,7 @@ ldi r16,0b00010000
 	out portc,r16
 	rcall mat  
 	rcall res
-	
+	rcall Transmitir
 	rcall del100
 	rcall del100
 	rjmp win
@@ -191,17 +192,36 @@ Transmitir:
 rcall SerialInit
 ldi r18,'A'
 rcall SerialTransmit
-
 Tret:
 ret
-Recibir:
 
-SerialReceive:
+Recibir:
+rcall SerialInit
+_Recibir:
+lds gvar, UCSR0A
+sbrs gvar, RXC0
+rjmp _Recibir
+lds r18, UDR0
+cpi r18, 'A'
+breq RecibirLED
+ldi r18,0
+ret
+RecibirLED:
+ldi gvar,pinb
+ori gvar, 0b00010000
+out portb,gvar
+rcall del100
+ldi gvar,pinb
+andi gvar, 0b11101111
+out portb,gvar
+rcall del100
+ret
+/*SerialReceive:
 lds gvar, UCSR0A
 sbrs gvar, RXC0
 rjmp SerialReceive
 lds r18, UDR0
-ret
+ret*/
 
 SerialTransmit:
 lds gvar,UCSR0A
