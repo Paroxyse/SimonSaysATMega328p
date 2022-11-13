@@ -68,24 +68,23 @@ ldi r16,0b00010000
   rcall rd
   mov gvar,r16
   out portc, gvar
-// switching current ye  
+// Se inicia la detección de botones
   rcall mat
   rcall btnget
   btnstart:
+//Se revisa si se está presionando el botón de inicio
   in gvar, PIND
   andi gvar, 0b00100100
   cpi gvar, 0b00100100
   brne btstartfin
-
+//Mientras está presionado el botón de inicio, se cicla
   miniloopstart:
-  
   rcall rd
   in gvar, PIND
   andi gvar, 0b00100100
   cpi gvar, 0b00100100
   breq miniloopstart
 //  
-
   rcall del100  
   rcall del100  
 //Se prende el led de inicio
@@ -103,10 +102,9 @@ ldi r16,0b00010000
   ldi counter,1
   //Se llama el método levels, que detecta pulsaciones y las compara con el registro correspondiente a la ronda actual
   rcall levels
-
   
   btstartfin:
- 
+	
     rjmp snake_loop
 	hell: //Este es el ciclo en el que se queda atorado el código si se pierde
 	//Se prende el botón de reset y se cicla esperando un reinicio manual
@@ -122,9 +120,12 @@ ldi r16,0b00010000
 	out portc,r16
 	rcall mat  
 	rcall res
+	
 	rcall del100
 	rcall del100
 	rjmp win
+
+
 Levels:
 //Se llama método de detección de botones lvl
 rcall lvl
@@ -163,7 +164,6 @@ cp cvar, LED5
 brne hell
 cp counter,rvar
 breq LevelUP
-
 ret
 
 LevelUP:
@@ -184,7 +184,46 @@ lvl:
   cpi cvar,0
   breq lvl
   ret
+Transmitir:
+//Detectar botón
+//salto en falso
+//ciclo botón
+rcall SerialInit
+ldi r18,'A'
+rcall SerialTransmit
 
+Tret:
+ret
+Recibir:
+
+SerialReceive:
+lds gvar, UCSR0A
+sbrs gvar, RXC0
+rjmp SerialReceive
+lds r18, UDR0
+ret
+
+SerialTransmit:
+lds gvar,UCSR0A
+sbrs gvar, UDRE0
+rjmp SerialTransmit
+sts UDR0,r18
+ret
+
+SerialInit:
+ldi gvar, 103
+clr r18
+sts UBRR0H, r18
+sts UBRR0L, gvar
+
+ldi gvar, (1<<RXEN0) | (1<<TXEN0)
+sts UCSR0A,gvar
+ldi gvar, (1<<RXEN0) | (1<<TXEN0)
+sts UCSR0B,gvar
+
+ldi gvar, 0b00001110
+sts UCSR0C, gvar
+ret
 
 LIGHTLEDS:
 rcall del50
@@ -219,11 +258,9 @@ rcall nextlight
 cp counter,rvar
 breq LENDS
 
-
 LENDS:
 //rcall nextlight
 ret
-
 nextlight:
 //Apaga los LEDs y deja encendido el de Inicio
 rcall del250
@@ -315,7 +352,6 @@ breq bl4
 ldi cvar, 8
 ori cvar,16
 
-
 btngetend:
 rcall del50
 ret
@@ -349,14 +385,10 @@ mat:
   andi gvar, 0b01000100
   cpi gvar, 0b01000100
   breq reset
-
-  /*ldi gvar, 0b00000000
-  out portc,gvar*/
   rcall del100
   rjmp start1 //Se salta al inicio del programa (secuencia de encendido e inicialización de valores en registros)
   resetend:
   ret
-
   //Rutinas de Delay
 del250:
 LDI del,80 //3.125*80=250ms
@@ -379,11 +411,9 @@ NOP
 DEC del3
 ; 250 x 1/4 uS = 62.5 uS 
 BRNE et1
-
 DEC del2
 BRNE et2
 ; 1 mS x 250 = 250 mS
-
 DEC del
 BRNE et3
 ; 250 mS x 2 = 500 mS
@@ -393,8 +423,7 @@ rd:
 //desplaza el valor de 31 un bit a la izquierda (Se inicializa en 1 al inicio del programa)
   lsl r31
   cpi r31,0b0010000 //Si r31 es el quinto bit, se regresa su valor a 1
-  breq rdr
-  
+  breq rdr 
   ret
   rdr:
   ldi r31,1
