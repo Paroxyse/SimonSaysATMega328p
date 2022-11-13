@@ -12,9 +12,7 @@
 ; Created: 07/11/2022 09:51:17 p. m.
 ; Author : Space
 ;
-.dseg               ;Data segment
-.org 0x200          ;Start storing at 0x200
-storage: .db 1,2,3,4,5,6    ;Allocate 1 byte for storage
+
 
 .cseg  
 .def L1 = r16
